@@ -7,17 +7,17 @@ from HTMLParser import HTMLParser
 
 class Node():
     def __init__(self):
-        self.tag_name =''
-        self.data_value=''
+        self.tag_name = ''
+        self.data_value = ''
     
 class MyHTMLParser(HTMLParser):
-    list=[]
-    i =0
+    list = []
+    i = 0
     
     def handle_starttag(self, tag, attrs):
-        if(self.i==0):
-            self.list=[];
-            self.i=1
+        if(self.i == 0):
+            self.list = [];
+            self.i = 1
         mynode=Node();
         #print "Encountered a start tag:", tag
         mynode.tag_name  = 'startTag'
@@ -26,14 +26,14 @@ class MyHTMLParser(HTMLParser):
         
     def handle_data(self, data):
         #print "Encountered some data  :", data
-        mynode=Node();
-        mynode.tag_name  = 'data'
+        mynode = Node();
+        mynode.tag_name = 'data'
         mynode.data_value = data
         self.list.append(mynode)
         
     def handle_endtag(self, tag):
         #print "Encountered an end tag :", tag
-        mynode=Node();
+        mynode = Node();
         mynode.tag_name  = 'endTag'
         mynode.data_value = tag
         self.list.append(mynode)
@@ -43,6 +43,7 @@ class MyHTMLParser(HTMLParser):
 
 with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
     pricingInformationDictionary = []
+    countHtml = 0 ## the count of webpages that containing pricinginfo
     for i, line in enumerate(infile):
         parser = MyHTMLParser()
         data = json.loads(line.strip())
@@ -52,15 +53,15 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
         #eachDict['link_url'] = data.get('link_url')
          
         ####parse html file using HTMLParser
-        if (data['link_text'].lower().find('pricing') != -1 or data['link_text'].lower().find('rates') != -1):
+        if (data['link_text'].lower().find('pricing') != - 1 or data['link_text'].lower().find('rates') != - 1):
             if(data.get('html') != ""):
                 parser.feed(data.get('html'))
                 sList = parser.list
                 index = 0
                 lentThresh = 8
-                nonNameList = ['p', 'br', 'li', 'span', 'strong', 'td', 'font', 'div', 'h1', 'h2', 'h3', 'h4', 'em', '\\', '/', '%', 'Pricing', 'Price', 'Free', 'function', 'hour', 'hr.', 'Qty', 'S', 'to', 'on', 'Up', 'of', 'Info', 'Any', 'i.e.', 'plus', 'No', '.SH', 'o:p', 'input', 'img', 'only for', ',']
+                nonNameList = ['p', 'br', 'li', 'span', 'strong', 'td', 'font', 'div', 'h1', 'h2', 'h3', 'h4', 'em', '\\', '/', '%', 'Pricing', 'Price', 'Free', 'function', 'hour', 'and', 'as', 'APY', 'hr.', 'Qty', 'S', 'to', 'on', 'Up', 'of', 'Info', 'Any', 'i.e.', 'plus', 'No', '.SH', 'o:p', 'input', 'img', 'only for', ',']
                 while(index < len(sList)):
-                    if(sList[index].tag_name == 'data' and sList[index].data_value.find('$')!=-1):
+                    if(sList[index].tag_name == 'data' and sList[index].data_value.find('$')!= -1):
                         pos_dollar = sList[index].data_value.find('$')
                         if(pos_dollar < len(sList[index].data_value)-1 and sList[index].data_value[pos_dollar+1].isdigit()):
                             ##case1: there are some words ahead of $***; words in a certain length; the words are product/service/solution; 
@@ -91,17 +92,22 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
                                             eachDict[s] = sList[index].data_value[pos_dollar:]
                                             break
                                         else:
-                                            t = t -1 
+                                            t = t - 1 
                                     else:
-                                        t = t -1
+                                        t = t - 1
                     index = index + 1
         else:
             ##the following one-line code can be added to count pages need a quote to get pricinginfo
             #eachDict['product/service/solution'] = 'Need a quote to get pricinginfo'
             pass
+        if(len(eachDict)> 0):
+            countHtml = countHtml + 1
+        #print "Current i = ", i
+        #print countHtml
         print eachDict
         pricingInformationDictionary.append(eachDict)
-        parser.i=0
+        parser.i = 0
         del parser
         raw_input("----------------------enter to continue----------------------")
+
     
