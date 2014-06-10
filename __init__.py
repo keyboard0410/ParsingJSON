@@ -61,7 +61,7 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
                                 print eachDict
                             except AttributeError:
                                 pass 
-                           
+                        ###########modify   
                             
                 elif(html_Cleaned[startIndexOfValue-1] != '>'):
                     startIndexOfField = startIndexOfValue-1
