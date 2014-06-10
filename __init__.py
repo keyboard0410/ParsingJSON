@@ -43,6 +43,7 @@ class MyHTMLParser(HTMLParser):
 
 with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
     pricingInformationDictionary = []
+    countHtml=0
     for i, line in enumerate(infile):
         parser = MyHTMLParser()
         data = json.loads(line.strip())
@@ -57,28 +58,35 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
                 parser.feed(data.get('html'))
                 sList = parser.list
                 index = 0
-                newString = ''
+                lentThresh = 5
+                nonNameList = ['p', 'br', 'span', 'strong', 'td', 'font', 'div', 'h2', 'Pricing', 'Qty', 'S', 'to', '.SH', 'o:p', 'input', 'img', 'only for', ',']
                 while(index < len(sList)):
-                    if(sList[index].tag_name == 'data' and sList[index].data_value.find('$')!=-1):
+                    if(sList[index].tag_name == 'data' and sList[index].data_value.find('$') != -1):
                         pos_dollar = sList[index].data_value.find('$')
                         if(pos_dollar < len(sList[index].data_value)-1 and sList[index].data_value[pos_dollar+1].isdigit()):
                             ##case1: there are some words ahead of $***; the words are product/service/solution;
-                            if(pos_dollar > 5):
+                            if(pos_dollar > 5 and sList[index].data_value[0] != '\\' and len(sList[index].data_value[0:pos_dollar].split()) < lentThresh and len(sList[index].data_value[0:pos_dollar].split()) >= 1):
                                 #print "product/service/solution:" + sList[index].data_value[0:pos_dollar]  ## A pricingInfoDict will be as a return, to print just for easily checking parsing results
                                 #print "pricingInfo:" + sList[index].data_value[pos_dollar:]
+                                #tempList1 = sList[index].data_value[0:pos_dollar].split()
+                                #if(tempList1[0] not in nonNameList):
                                 eachDict[sList[index].data_value[0:pos_dollar]] = sList[index].data_value[pos_dollar:]
                             ##case2: no words ahead of $****; need to search for the previous line until matching 
                             ##1)there is only one data within startTag and endTag 
                             ##2)length of the data is less than some value 
                             ##3)there is no prince in this data;
-                            elif(pos_dollar == 0 or len(sList[index].data_value[0:pos_dollar].split()) == 0):
+                            ##elif(pos_dollar == 0 or len(sList[index].data_value[0:pos_dollar].split()) == 0):
+                            else:
                                 t = index - 2
                                 while(t >= 0):
-                                    if('$' not in sList[t].data_value and len(sList[t].data_value.split()) > 0 and sList[t-1].tag_name == 'startTag' and sList[t+1].tag_name == 'endTag'):
+                                    if('$' not in sList[t].data_value and len(sList[t].data_value.split()) > 0 and len(sList[t].data_value.split()) < lentThresh and sList[t-1].tag_name == 'startTag' and sList[t+1].tag_name == 'endTag'):
                                         #print "product/service/solution:" + sList[t].data_value
                                         #print "pricingInfo:" + sList[index].data_value[pos_dollar:]
+                                        #tempList2 = sList[t].data_value.split()
+                                        #if(tempList2[0] not in nonNameList and sList[t].data_value != '\\'):
                                         eachDict[sList[t].data_value] = sList[index].data_value[pos_dollar:]
                                         break
+                                    #t = t -1   
                                     else:
                                         t = t -1
                     index = index + 1
@@ -86,6 +94,9 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
             ##the following one-line code can be added to count pages need a quote to get pricinginfo
             #eachDict['product/service/solution'] = 'Need a quote to get pricinginfo'
             pass
+       
+        if(len(eachDict)!=0):
+            countHtml=countHtml+1
         print eachDict
         pricingInformationDictionary.append(eachDict)
         parser.i=0
