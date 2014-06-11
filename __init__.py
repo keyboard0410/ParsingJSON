@@ -11,41 +11,41 @@ class Node():
         self.data_value = ''
     
 class MyHTMLParser(HTMLParser):
-    list = []
+    _list = []
     i = 0
     
     def handle_starttag(self, tag, attrs):
-        if(self.i == 0):
-            self.list = [];
-            self.i = 1
-        mynode=Node();
+  
+        mynode=Node()
         #print "Encountered a start tag:", tag
         mynode.tag_name  = 'startTag'
         mynode.data_value = tag
-        self.list.append(mynode)
+        self._list.append(mynode)
         
     def handle_data(self, data):
         #print "Encountered some data  :", data
-        mynode = Node();
+        mynode = Node()
         mynode.tag_name = 'data'
         mynode.data_value = data
-        self.list.append(mynode)
+        self._list.append(mynode)
         
     def handle_endtag(self, tag):
         #print "Encountered an end tag :", tag
-        mynode = Node();
+        mynode = Node()
         mynode.tag_name  = 'endTag'
         mynode.data_value = tag
-        self.list.append(mynode)
+        self._list.append(mynode)
         
-
-
+    def resetList(self):
+        self._list=[]    
+        return self
 
 with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
     pricingInformationDictionary = []
     countHtml = 0 ## the count of webpages that containing pricinginfo
     for i, line in enumerate(infile):
-        parser = MyHTMLParser()
+        parser = MyHTMLParser().resetList()
+        
         data = json.loads(line.strip())
         #pprint (data)
         eachDict = {}
@@ -56,7 +56,7 @@ with gzip.open("I:\gangLiu\everstring\pricing_data_set.json", "r") as infile:
         if (data['link_text'].lower().find('pricing') != - 1 or data['link_text'].lower().find('rates') != - 1):
             if(data.get('html') != ""):
                 parser.feed(data.get('html'))
-                sList = parser.list
+                sList = parser._list
                 index = 0
                 lentThresh = 8
                 nonNameList = ['p', 'br', 'li', 'span', 'strong', 'td', 'font', 'div', 'h1', 'h2', 'h3', 'h4', 'em', '\\', '/', '%', 'Pricing', 'Price', 'Free', 'function', 'hour', 'and', 'as', 'APY', 'hr.', 'Qty', 'S', 'to', 'on', 'Up', 'of', 'Info', 'Any', 'i.e.', 'plus', 'No', '.SH', 'o:p', 'input', 'img', 'only for', ',']
